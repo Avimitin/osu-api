@@ -1,6 +1,15 @@
+use thiserror::Error;
 use typed_builder::TypedBuilder;
 
 use super::{Mods, OsuMode};
+
+#[derive(Error, Debug)]
+pub enum Error {
+  #[error("Argument given is invalid: {0}")]
+  InvalidArgument(String),
+}
+
+type Result<T, E = Error> = core::result::Result<T, E>;
 
 #[derive(Debug)]
 pub enum UserId {
@@ -46,13 +55,15 @@ pub struct GetBeatmapsProps {
 }
 
 impl GetBeatmapsProps {
-  pub(crate) fn into_query_param(self, key: &str) -> Vec<(String, String)> {
+  pub(crate) fn try_into_query_param(self, key: &str) -> Result<Vec<(String, String)>> {
     let mut query: Vec<(String, String)> = Vec::with_capacity(9);
 
     query.push(("k".to_string(), key.to_string()));
 
     if self.beatmapset_id == 0 && self.beatmap_id == 0 {
-      // TODO: return error here
+      return Err(Error::InvalidArgument(
+        "neither beatmapset id nor beatmap id was given".to_string(),
+      ));
     }
 
     if self.beatmapset_id != 0 {
@@ -101,6 +112,6 @@ impl GetBeatmapsProps {
       query.push(("since".to_string(), date.to_string()))
     }
 
-    query
+    Ok(query)
   }
 }
