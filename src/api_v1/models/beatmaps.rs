@@ -22,7 +22,8 @@ impl From<String> for UserId {
 
 // TODO: Add `since`
 #[derive(Debug, TypedBuilder)]
-#[builder(builder_type_doc = "Builder for creating request to get_beatmaps API")]
+#[builder(builder_type_doc = "Builder for creating request to get_beatmaps API,
+read https://github.com/ppy/osu-api/wiki#parameters for meaning")]
 pub struct GetBeatmapsProps {
   #[builder(default = 0)]
   beatmapset_id: u64,
@@ -40,6 +41,8 @@ pub struct GetBeatmapsProps {
   limit: u32,
   #[builder(default = Vec::new())]
   mods: Vec<Mods>,
+  #[builder(default, setter(strip_option))]
+  since: Option<chrono::NaiveDate>,
 }
 
 impl GetBeatmapsProps {
@@ -92,6 +95,10 @@ impl GetBeatmapsProps {
       });
 
       query.push(("mods".to_string(), mods.to_string()))
+    }
+
+    if let Some(date) = self.since {
+      query.push(("since".to_string(), date.to_string()))
     }
 
     query
