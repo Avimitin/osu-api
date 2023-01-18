@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use thiserror::Error;
 use typed_builder::TypedBuilder;
 
@@ -55,10 +57,10 @@ pub struct GetBeatmapsProps {
 }
 
 impl GetBeatmapsProps {
-  pub(crate) fn try_into_query_param(self, key: &str) -> Result<Vec<(String, String)>> {
-    let mut query: Vec<(String, String)> = Vec::with_capacity(9);
+  pub(crate) fn try_into_query_param(self, key: &str) -> Result<HashMap<&'static str, String>> {
+    let mut query = HashMap::new();
 
-    query.push(("k".to_string(), key.to_string()));
+    query.insert("k", key.to_string());
 
     if self.beatmapset_id == 0 && self.beatmap_id == 0 {
       return Err(Error::InvalidArgument(
@@ -67,36 +69,36 @@ impl GetBeatmapsProps {
     }
 
     if self.beatmapset_id != 0 {
-      query.push(("s".to_string(), self.beatmapset_id.to_string()))
+      query.insert("s", self.beatmapset_id.to_string());
     }
 
     match self.user_id {
       UserId::Id(id) => {
-        query.push(("u".to_string(), id.to_string()));
-        query.push(("type".to_string(), "id".to_string()));
+        query.insert("u", id.to_string());
+        query.insert("type", "id".to_string());
       }
       UserId::Username(name) => {
-        query.push(("u".to_string(), name));
-        query.push(("type".to_string(), "string".to_string()));
+        query.insert("u", name);
+        query.insert("type", "string".to_string());
       }
     };
 
     if let Some(mode) = self.mode {
-      query.push(("m".to_string(), mode.to_string()));
+      query.insert("m", mode.to_string());
 
       let include_converted = if self.include_converted { "1" } else { "0" };
       match mode {
-        OsuMode::Standard => (), // do nothing
-        _ => query.push(("a".to_string(), include_converted.to_string())),
-      }
+        OsuMode::Standard => None, // do nothing
+        _ => query.insert("a", include_converted.to_string()),
+      };
     }
 
     if let Some(hash) = self.beatmap_hash {
-      query.push(("h".to_string(), hash))
+      query.insert("h", hash);
     }
 
     if self.limit != 0 {
-      query.push(("limit".to_string(), self.limit.to_string()))
+      query.insert("limit", self.limit.to_string());
     }
 
     if !self.mods.is_empty() {
@@ -105,11 +107,11 @@ impl GetBeatmapsProps {
         accum | bit
       });
 
-      query.push(("mods".to_string(), mods.to_string()))
+      query.insert("mods", mods.to_string());
     }
 
     if let Some(date) = self.since {
-      query.push(("since".to_string(), date.to_string()))
+      query.insert("since", date.to_string());
     }
 
     Ok(query)
