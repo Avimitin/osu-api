@@ -53,82 +53,36 @@ impl<'a> From<&'a str> for UserId<'a> {
 
 #[derive(Debug)]
 pub enum Mods {
-  None,
-  NoFail,
-  Easy,
-  TouchDevice,
-  Hidden,
-  HardRock,
-  SuddenDeath,
-  DoubleTime,
-  Relax,
-  HalfTime,
-  Nightcore, // Only set along with DoubleTime. i.e: NC only gives 576
-  Flashlight,
-  Autoplay,
-  SpunOut,
-  Relax2,  // Autopilot
-  Perfect, // Only set along with SuddenDeath. i.e: PF only gives 16416
-  Key4,
-  Key5,
-  Key6,
-  Key7,
-  Key8,
-  FadeIn,
-  Random,
-  Cinema,
-  Target,
-  Key9,
-  KeyCoop,
-  Key1,
-  Key3,
-  Key2,
-  ScoreV2,
-  Mirror,
-}
-
-impl From<Mods> for u64 {
-  fn from(mods: Mods) -> Self {
-    // special case
-    if let Mods::None = mods {
-      return 0;
-    }
-
-    let ret = 1 << ((mods as u64) - 1);
-
-    match ret {
-      // NC should be set along with DT
-      512 => {
-        let mods = Mods::DoubleTime;
-        let dt: u64 = mods.into();
-        ret | dt
-      }
-      // PF should be set along with SD
-      16384 => {
-        let mods = Mods::SuddenDeath;
-        let sd: u64 = mods.into();
-        ret | sd
-      }
-      _ => ret,
-    }
-  }
-}
-
-#[test]
-fn test_mods_bit() {
-  let eq = |get: u64, expect: u64| {
-    assert_eq!(get, expect);
-  };
-
-  let mods = Mods::HardRock;
-  eq(mods.into(), 16);
-
-  let mods = Mods::Nightcore;
-  eq(mods.into(), 576);
-
-  let mods = Mods::Perfect;
-  eq(mods.into(), 16416);
-
-  let mods = Mods::Key2;
-  eq(mods.into(), 268435456);
+  None = 0,
+  NoFail = 1,
+  Easy = 2,
+  TouchDevice = 4,
+  Hidden = 8,
+  HardRock = 16,
+  SuddenDeath = 32,
+  DoubleTime = 64,
+  Relax = 128,
+  HalfTime = 256,
+  Nightcore = 512, // Only set along with DoubleTime. i.e: NC only gives 576
+  Flashlight = 1024,
+  Autoplay = 2048,
+  SpunOut = 4096,
+  Relax2 = 8192,   // Autopilot
+  Perfect = 16384, // Only set along with SuddenDeath. i.e: PF only gives 16416
+  Key4 = 32768,
+  Key5 = 65536,
+  Key6 = 131072,
+  Key7 = 262144,
+  Key8 = 524288,
+  FadeIn = 1048576,
+  Random = 2097152,
+  Cinema = 4194304,
+  Target = 8388608,
+  Key9 = 16777216,
+  KeyCoop = 33554432,
+  Key1 = 67108864,
+  Key3 = 134217728,
+  Key2 = 268435456,
+  ScoreV2 = 536870912,
+  Mirror = 1073741824,
 }
