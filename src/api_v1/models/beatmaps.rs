@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 use typed_builder::TypedBuilder;
 
-use super::{Mods, OsuMode};
+use super::{Mods, OsuMode, UserId};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -13,35 +13,16 @@ pub enum Error {
 
 type Result<T, E = Error> = core::result::Result<T, E>;
 
-#[derive(Debug)]
-pub enum UserId {
-  Id(u64),
-  Username(String),
-}
-
-impl From<u64> for UserId {
-  fn from(id: u64) -> Self {
-    Self::Id(id)
-  }
-}
-
-impl From<String> for UserId {
-  fn from(name: String) -> Self {
-    Self::Username(name)
-  }
-}
-
-// TODO: Add `since`
 #[derive(Debug, TypedBuilder)]
 #[builder(builder_type_doc = "Builder for creating request to get_beatmaps API,
 read https://github.com/ppy/osu-api/wiki#parameters for meaning")]
-pub struct GetBeatmapsProps {
+pub struct GetBeatmapsProps<'u> {
   #[builder(default = 0)]
   beatmapset_id: u64,
   #[builder(default = 0)]
   beatmap_id: u64,
-  #[builder(setter(transform = |id: impl Into<UserId>| id.into()))]
-  user_id: UserId,
+  #[builder(setter(transform = |id: impl Into<UserId<'u>>| id.into()))]
+  user_id: UserId<'u>,
   #[builder(default, setter(strip_option))]
   mode: Option<OsuMode>,
   #[builder(setter(strip_bool))]
@@ -56,7 +37,7 @@ pub struct GetBeatmapsProps {
   since: Option<chrono::NaiveDate>,
 }
 
-impl GetBeatmapsProps {
+impl<'u> GetBeatmapsProps<'u> {
   pub(crate) fn try_into_query_param(self, key: &str) -> Result<HashMap<&'static str, String>> {
     let mut query = HashMap::new();
 
@@ -78,7 +59,7 @@ impl GetBeatmapsProps {
         query.insert("type", "id".to_string());
       }
       UserId::Username(name) => {
-        query.insert("u", name);
+        query.insert("u", name.to_string());
         query.insert("type", "string".to_string());
       }
     };

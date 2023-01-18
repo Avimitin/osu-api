@@ -1,4 +1,5 @@
 mod beatmaps;
+mod recent;
 
 pub use beatmaps::GetBeatmapsProps;
 
@@ -10,6 +11,24 @@ pub enum OsuMode {
   Taiko,
   CatchTheBeat,
   Mania,
+}
+
+#[derive(Debug)]
+pub enum UserId<'u> {
+  Id(u64),
+  Username(&'u str),
+}
+
+impl From<u64> for UserId<'_> {
+  fn from(id: u64) -> Self {
+    Self::Id(id)
+  }
+}
+
+impl<'a> From<&'a str> for UserId<'a> {
+  fn from(name: &'a str) -> Self {
+    Self::Username(name)
+  }
 }
 
 impl ToString for OsuMode {
