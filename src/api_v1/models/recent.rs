@@ -17,10 +17,8 @@ pub struct GetUserRecentProp<'k, 'u> {
   limit: u8,
 }
 
-impl<'k, 'u> TryFrom<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String> {
-  type Error = String;
-
-  fn try_from(prop: GetUserRecentProp<'k, 'u>) -> Result<Self, Self::Error> {
+impl<'k, 'u> From<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String> {
+  fn from(prop: GetUserRecentProp<'k, 'u>) -> Self {
     let mut query = Self::new();
 
     query.insert("k", prop.api_key.to_string());
@@ -43,7 +41,7 @@ impl<'k, 'u> TryFrom<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String
 
     query.insert("limit", prop.limit.to_string());
 
-    Ok(query)
+    query
   }
 }
 
