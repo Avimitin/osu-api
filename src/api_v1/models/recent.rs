@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use super::{OsuMode, UserId};
+use super::{
+  s_to_bool, s_to_datetime, s_to_mods_flags, s_to_u32, s_to_u64, ModsFlag, OsuMode, UserId,
+};
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
@@ -47,18 +49,30 @@ impl<'k, 'u> TryFrom<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String
 
 #[derive(Deserialize)]
 pub struct GetUserRecentResp {
-  beatmap_id: String,
-  score: String,
-  maxcombo: String,
-  count50: String,
-  count100: String,
-  count300: String,
-  countmiss: String,
-  countkatu: String,
-  countgeki: String,
-  perfect: String,
-  enabled_mods: String,
-  user_id: String,
-  date: String,
   rank: String,
+  user_id: String,
+  #[serde(deserialize_with = "s_to_u64")]
+  beatmap_id: u64,
+  #[serde(deserialize_with = "s_to_u64")]
+  score: u64,
+  #[serde(deserialize_with = "s_to_u32")]
+  maxcombo: u32,
+  #[serde(deserialize_with = "s_to_u32")]
+  count50: u32,
+  #[serde(deserialize_with = "s_to_u32")]
+  count100: u32,
+  #[serde(deserialize_with = "s_to_u32")]
+  count300: u32,
+  #[serde(deserialize_with = "s_to_u32")]
+  countmiss: u32,
+  #[serde(deserialize_with = "s_to_u32")]
+  countkatu: u32,
+  #[serde(deserialize_with = "s_to_u32")]
+  countgeki: u32,
+  #[serde(deserialize_with = "s_to_bool")]
+  perfect: bool,
+  #[serde(deserialize_with = "s_to_mods_flags")]
+  enabled_mods: ModsFlag,
+  #[serde(deserialize_with = "s_to_datetime")]
+  date: chrono::DateTime<chrono::Utc>,
 }
