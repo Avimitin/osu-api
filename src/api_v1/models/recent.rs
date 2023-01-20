@@ -45,7 +45,7 @@ impl<'k, 'u> From<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String> {
   }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct GetUserRecentResp {
   rank: String,
   user_id: String,
