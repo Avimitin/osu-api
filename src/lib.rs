@@ -25,3 +25,6 @@ cfg_v2! {
     pub mod api_v2;
     pub use api_v2 as api;
 }
+
+#[cfg(feature = "util")]
+pub mod util;
