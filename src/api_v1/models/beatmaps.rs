@@ -145,17 +145,17 @@ pub struct GetBeatmapsResp {
   #[serde(deserialize_with = "s_to_f64")]
   pub diff_speed: f64,
   // Circle size value (CS)
-  #[serde(deserialize_with = "s_to_u8")]
-  pub diff_size: u8,
+  #[serde(deserialize_with = "s_to_f32")]
+  pub diff_size: f32,
   // Overall difficulty (OD)
-  #[serde(deserialize_with = "s_to_u8")]
-  pub diff_overall: u8,
+  #[serde(deserialize_with = "s_to_f32")]
+  pub diff_overall: f32,
   // Approach Rate (AR)
-  #[serde(deserialize_with = "s_to_u8")]
-  pub diff_approach: u8,
+  #[serde(deserialize_with = "s_to_f32")]
+  pub diff_approach: f32,
   // Health drain (HP)
-  #[serde(deserialize_with = "s_to_u8")]
-  pub diff_drain: u8,
+  #[serde(deserialize_with = "s_to_f32")]
+  pub diff_drain: f32,
   // seconds from first note to last note not including breaks
   #[serde(deserialize_with = "s_to_u64")]
   pub hit_length: u64,

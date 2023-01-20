@@ -61,7 +61,7 @@ macro_rules! s_to_scalar {
   }
 }
 
-s_to_scalar![u8, u16, u32, u64, f64];
+s_to_scalar![u16, u32, u64, f32, f64];
 
 pub(crate) fn s_to_approval<'de, D>(d: D) -> Result<Approval, D::Error>
 where
