@@ -4,6 +4,7 @@ mod recent;
 pub use beatmaps::GetBeatmapsProps;
 pub use recent::{GetUserRecentProp, GetUserRecentResp};
 
+use chrono::{TimeZone, Utc};
 use paste::paste;
 use serde::{Deserialize, Deserializer, Serialize};
 
@@ -145,7 +146,7 @@ where
   D: Deserializer<'de>,
 {
   let date: String = Deserialize::deserialize(d)?;
-  let date: chrono::DateTime<chrono::Utc> = date.parse().map_err(|err| {
+  let date = Utc.datetime_from_str(&date, "%F %T").map_err(|err| {
     serde::de::Error::custom(format!(
       "response datetime is not in expecting format: {err}"
     ))
@@ -164,7 +165,7 @@ macro_rules! s_to_scalar {
           let s: String = Deserialize::deserialize(d)?;
           let ret: $t = s.parse()
                          .map_err(|err| serde::de::Error::custom(
-                            format!("Expecting {} but found unexpecting data", stringify!($t))
+                            format!("Expecting {} but found unexpecting data: {err}", stringify!($t))
                           ))?;
           Ok(ret)
         }
