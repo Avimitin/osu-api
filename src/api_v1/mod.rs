@@ -1,7 +1,17 @@
 mod models;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use paste::paste;
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+  #[error("the given request param is invalid")]
+  InvalidRequestParams,
+  #[error("fail to send request")]
+  NetIO(#[from] reqwest::Error),
+  #[error("fail to deserialize response into expected type")]
+  UnexpectedResponse(#[from] serde_json::Error),
+}
 
 /// Generate constant endpoint
 macro_rules! generate_endpoint {
@@ -23,14 +33,12 @@ generate_endpoint! {
 }
 
 pub struct OsuApi {
-  key: String,
   http: reqwest::Client,
 }
 
 impl OsuApi {
   pub fn new(key: impl ToString) -> Self {
     Self {
-      key: key.to_string(),
       http: reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .build()
@@ -38,9 +46,33 @@ impl OsuApi {
     }
   }
 
-  pub async fn get_beatmaps(&self, param: models::GetBeatmapsProps) {
-    let param = param.into_query_param(&self.key);
-    let url = reqwest::Url::parse_with_params(API_GET_BEATMAPS, &param).unwrap();
-    self.http.get(url).send().await;
+  pub async fn get_user_recent<'k, 'u>(
+    &self,
+    param: models::GetUserRecentProp<'k, 'u>,
+  ) -> Result<Vec<models::GetUserRecentResp>, Error> {
+    let param: HashMap<&'static str, String> = param.into();
+    let url = reqwest::Url::parse_with_params(API_GET_USER_RECENT, &param)
+      .expect("fail to turn GetUserRecentProp into params");
+    let resp = self.http.get(url).send().await?.bytes().await?;
+    let recent: Vec<models::GetUserRecentResp> = serde_json::from_slice(&resp)?;
+
+    Ok(recent)
   }
+}
+
+#[tokio::test]
+async fn test_get_user_recent() {
+  dotenvy::dotenv().ok();
+
+  let api_key = std::env::var("OSU_API_KEY").expect("Require env `OSU_API_KEY` set");
+
+  let props = models::GetUserRecentProp::builder()
+    .api_key(&api_key)
+    .user_info("BlackDog5")
+    .limit(1)
+    .build();
+  let api = OsuApi::new(&api_key);
+  let resp = api.get_user_recent(props).await.unwrap();
+
+  assert!(!resp.is_empty())
 }
