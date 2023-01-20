@@ -1,12 +1,11 @@
 mod beatmaps;
+mod de;
 mod recent;
 
 pub use beatmaps::GetBeatmapsProps;
 pub use recent::{GetUserRecentProp, GetUserRecentResp};
 
-use chrono::{TimeZone, Utc};
-use paste::paste;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum OsuMode {
@@ -115,63 +114,3 @@ bitflags::bitflags! {
                             | Self::FADEIN.bits;
   }
 }
-
-pub(crate) fn s_to_mods_flags<'de, D>(d: D) -> Result<ModsFlag, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  let mods: String = Deserialize::deserialize(d)?;
-  let mods: u64 = mods
-    .parse()
-    .expect("Expect u64 but get unexpected type when parsing mods");
-  let flag =
-    ModsFlag::from_bits(mods).ok_or_else(|| serde::de::Error::custom("invalid mods bitflag"))?;
-  Ok(flag)
-}
-
-fn s_to_bool<'de, D>(d: D) -> Result<bool, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  let is: String = Deserialize::deserialize(d)?;
-  let is = match is.as_str() {
-    "0" => false,
-    _ => true,
-  };
-  Ok(is)
-}
-
-fn s_to_datetime<'de, D>(d: D) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  let date: String = Deserialize::deserialize(d)?;
-  let date = Utc.datetime_from_str(&date, "%F %T").map_err(|err| {
-    serde::de::Error::custom(format!(
-      "response datetime is not in expecting format: {err}"
-    ))
-  })?;
-  Ok(date)
-}
-
-macro_rules! s_to_scalar {
-  ($($t:tt),+) => {
-    $(
-      paste! {
-        fn [<s_to_ $t>]<'de, D>(d: D) -> Result<$t, D::Error>
-        where
-          D: Deserializer<'de>
-        {
-          let s: String = Deserialize::deserialize(d)?;
-          let ret: $t = s.parse()
-                         .map_err(|err| serde::de::Error::custom(
-                            format!("Expecting {} but found unexpecting data: {err}", stringify!($t))
-                          ))?;
-          Ok(ret)
-        }
-      }
-    )+
-  }
-}
-
-s_to_scalar![u32, u64];
