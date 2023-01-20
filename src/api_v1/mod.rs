@@ -1,7 +1,15 @@
 mod models;
-use std::{collections::HashMap, time::Duration};
+use std::collections::HashMap;
 
 use paste::paste;
+
+#[async_trait::async_trait]
+pub trait OsuApiRequester {
+  async fn get_user_recent<'k, 'u>(
+    &self,
+    param: models::GetUserRecentProp<'k, 'u>,
+  ) -> Result<Vec<models::GetUserRecentResp>, Error>;
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -32,28 +40,16 @@ generate_endpoint! {
   get_user_recent;
 }
 
-pub struct OsuApi {
-  http: reqwest::Client,
-}
-
-impl OsuApi {
-  pub fn new(key: impl ToString) -> Self {
-    Self {
-      http: reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-        .unwrap(),
-    }
-  }
-
-  pub async fn get_user_recent<'k, 'u>(
+#[async_trait::async_trait]
+impl OsuApiRequester for reqwest::Client {
+  async fn get_user_recent<'k, 'u>(
     &self,
     param: models::GetUserRecentProp<'k, 'u>,
   ) -> Result<Vec<models::GetUserRecentResp>, Error> {
     let param: HashMap<&'static str, String> = param.into();
     let url = reqwest::Url::parse_with_params(API_GET_USER_RECENT, &param)
       .expect("fail to turn GetUserRecentProp into params");
-    let resp = self.http.get(url).send().await?.bytes().await?;
+    let resp = self.get(url).send().await?.bytes().await?;
     let recent: Vec<models::GetUserRecentResp> = serde_json::from_slice(&resp)?;
 
     Ok(recent)
@@ -71,8 +67,8 @@ async fn test_get_user_recent() {
     .user_info("BlackDog5")
     .limit(1)
     .build();
-  let api = OsuApi::new(&api_key);
-  let resp = api.get_user_recent(props).await.unwrap();
+  let client = reqwest::Client::new();
+  let resp = client.get_user_recent(props).await.unwrap();
 
   assert!(!resp.is_empty())
 }
