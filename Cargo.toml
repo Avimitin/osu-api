@@ -24,3 +24,4 @@ dotenvy = "0.15.6"
 default = ["v1"]
 v1 = []
 v2 = []
+util = []
