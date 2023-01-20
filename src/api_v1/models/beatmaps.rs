@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 use typed_builder::TypedBuilder;
 
-use super::{Mods, OsuMode, UserId};
+use super::{ModsFlag, OsuMode, UserId};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -32,7 +32,7 @@ pub struct GetBeatmapsProps<'u> {
   #[builder(default = 0)]
   limit: u32,
   #[builder(default = Vec::new())]
-  mods: Vec<Mods>,
+  mods: Vec<ModsFlag>,
   #[builder(default, setter(strip_option))]
   since: Option<chrono::NaiveDate>,
 }
@@ -83,10 +83,10 @@ impl<'u> GetBeatmapsProps<'u> {
     }
 
     if !self.mods.is_empty() {
-      let mods = self.mods.into_iter().fold(0_u64, |accum, item| {
-        let bit: u64 = item.into();
-        accum | bit
-      });
+      let mods = self
+        .mods
+        .into_iter()
+        .fold(0_u64, |accum, item| accum | item.bits());
 
       query.insert("mods", mods.to_string());
     }
