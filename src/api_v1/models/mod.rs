@@ -8,22 +8,22 @@ pub use recent::{GetUserRecentProp, GetUserRecentResp};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum OsuMode {
+pub enum GameMode {
   Standard,
   Taiko,
   CatchTheBeat,
   Mania,
 }
 
-impl ToString for OsuMode {
+impl ToString for GameMode {
   fn to_string(&self) -> String {
     self.as_ref().to_string()
   }
 }
 
-impl AsRef<str> for OsuMode {
+impl AsRef<str> for GameMode {
   fn as_ref(&self) -> &str {
-    use OsuMode::*;
+    use GameMode::*;
 
     match self {
       Standard => "0",

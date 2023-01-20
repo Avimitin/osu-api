@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
-use super::{de::*, ModsFlag, OsuMode, UserId};
+use super::{de::*, GameMode, ModsFlag, UserId};
 
 #[derive(Debug, TypedBuilder)]
 #[builder(builder_type_doc = "Builder for creating request to get_beatmaps API,
@@ -18,7 +18,7 @@ pub struct GetBeatmapsProps<'u, 'k> {
   #[builder(default, setter(transform = |id: impl Into<UserId<'u>>| Some(id.into())))]
   user_id: Option<UserId<'u>>,
   #[builder(default, setter(strip_option))]
-  mode: Option<OsuMode>,
+  mode: Option<GameMode>,
   #[builder(setter(strip_bool))]
   include_converted: bool,
   #[builder(default, setter(strip_option))]
@@ -69,7 +69,7 @@ impl<'u, 'k> TryFrom<GetBeatmapsProps<'u, 'k>> for HashMap<&'static str, String>
 
       let include_converted = if value.include_converted { "1" } else { "0" };
       match mode {
-        OsuMode::Standard => None, // do nothing
+        GameMode::Standard => None, // do nothing
         _ => query.insert("a", include_converted.to_string()),
       };
     }

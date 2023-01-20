@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{
   de::{s_to_bool, s_to_datetime, s_to_mods_flags, s_to_u32, s_to_u64},
-  ModsFlag, OsuMode, UserId,
+  GameMode, ModsFlag, UserId,
 };
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
@@ -13,7 +13,7 @@ pub struct GetUserRecentProp<'k, 'u> {
   #[builder(setter(transform = |id: impl Into<UserId<'u>>| id.into()))]
   user_info: UserId<'u>,
   #[builder(default, setter(strip_option))]
-  mode: Option<OsuMode>,
+  mode: Option<GameMode>,
   #[builder(default = 10)]
   limit: u8,
 }
