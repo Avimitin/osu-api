@@ -15,8 +15,8 @@ pub struct GetBeatmapsProps<'u, 'k> {
   beatmapset_id: u64,
   #[builder(default = 0)]
   beatmap_id: u64,
-  #[builder(setter(transform = |id: impl Into<UserId<'u>>| id.into()))]
-  user_id: UserId<'u>,
+  #[builder(default, setter(transform = |id: impl Into<UserId<'u>>| Some(id.into())))]
+  user_id: Option<UserId<'u>>,
   #[builder(default, setter(strip_option))]
   mode: Option<OsuMode>,
   #[builder(setter(strip_bool))]
@@ -48,15 +48,21 @@ impl<'u, 'k> TryFrom<GetBeatmapsProps<'u, 'k>> for HashMap<&'static str, String>
       query.insert("s", value.beatmapset_id.to_string());
     }
 
-    match value.user_id {
-      UserId::Id(id) => {
-        query.insert("u", id.to_string());
-      }
-      UserId::Username(name) => {
-        query.insert("u", name.to_string());
-        query.insert("type", "string".to_string());
-      }
-    };
+    if value.beatmap_id != 0 {
+      query.insert("b", value.beatmap_id.to_string());
+    }
+
+    if let Some(user_id) = value.user_id {
+      match user_id {
+        UserId::Id(id) => {
+          query.insert("u", id.to_string());
+        }
+        UserId::Username(name) => {
+          query.insert("u", name.to_string());
+          query.insert("type", "string".to_string());
+        }
+      };
+    }
 
     if let Some(mode) = value.mode {
       query.insert("m", mode.to_string());
