@@ -47,30 +47,30 @@ impl<'k, 'u> From<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String> {
 
 #[derive(Deserialize, Debug)]
 pub struct GetUserRecentResp {
-  rank: String,
-  user_id: String,
+  pub rank: String,
+  pub user_id: String,
   #[serde(deserialize_with = "s_to_u64")]
-  beatmap_id: u64,
+  pub beatmap_id: u64,
   #[serde(deserialize_with = "s_to_u64")]
-  score: u64,
+  pub score: u64,
   #[serde(deserialize_with = "s_to_u32")]
-  maxcombo: u32,
+  pub maxcombo: u32,
   #[serde(deserialize_with = "s_to_u32")]
-  count50: u32,
+  pub count50: u32,
   #[serde(deserialize_with = "s_to_u32")]
-  count100: u32,
+  pub count100: u32,
   #[serde(deserialize_with = "s_to_u32")]
-  count300: u32,
+  pub count300: u32,
   #[serde(deserialize_with = "s_to_u32")]
-  countmiss: u32,
+  pub countmiss: u32,
   #[serde(deserialize_with = "s_to_u32")]
-  countkatu: u32,
+  pub countkatu: u32,
   #[serde(deserialize_with = "s_to_u32")]
-  countgeki: u32,
+  pub countgeki: u32,
   #[serde(deserialize_with = "s_to_bool")]
-  perfect: bool,
+  pub perfect: bool,
   #[serde(deserialize_with = "s_to_mods_flags")]
-  enabled_mods: ModsFlag,
+  pub enabled_mods: ModsFlag,
   #[serde(deserialize_with = "s_to_datetime")]
-  date: chrono::DateTime<chrono::Utc>,
+  pub date: chrono::DateTime<chrono::Utc>,
 }
