@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use super::{
-  s_to_bool, s_to_datetime, s_to_mods_flags, s_to_u32, s_to_u64, ModsFlag, OsuMode, UserId,
+  de::{s_to_bool, s_to_datetime, s_to_mods_flags, s_to_u32, s_to_u64},
+  ModsFlag, OsuMode, UserId,
 };
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
