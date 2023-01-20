@@ -2,7 +2,7 @@ mod beatmaps;
 mod de;
 mod recent;
 
-pub use beatmaps::GetBeatmapsProps;
+pub use beatmaps::{GetBeatmapsProps, GetBeatmapsResp};
 pub use recent::{GetUserRecentProp, GetUserRecentResp};
 
 use serde::{Deserialize, Serialize};
