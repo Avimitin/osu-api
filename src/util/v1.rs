@@ -61,3 +61,16 @@ where
     beatmap: map_info,
   })
 }
+
+/// Generate beatmap cover image URL. Require beatmapset_id not beatmap_id.
+pub fn gen_beatmap_cover_img_url(set_id: u64) -> reqwest::Url {
+  reqwest::Url::parse(&format!(
+    "https://assets.ppy.sh/beatmaps/{set_id}/covers/cover.jpg"
+  ))
+  .unwrap()
+}
+
+/// Generate beatmap thumbnail image URL. Require beatmapset_id not beaetmap_id.
+pub fn gen_beatmap_thumbnail(set_id: u64) -> reqwest::Url {
+  reqwest::Url::parse(&format!("https://b.ppy.sh/thumb/{set_id}l.jpg")).unwrap()
+}
