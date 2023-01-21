@@ -12,11 +12,13 @@ pub enum Error {
   Api(#[from] ApiError),
 }
 
+/// Represent the score and beatmap information
 pub struct LatestReplay {
   pub score: GetUserRecentResp,
   pub beatmap: GetBeatmapsResp,
 }
 
+/// Get the latest replay from the given user
 pub async fn get_user_latest_replay<'u, C, U>(
   client: &C,
   key: &str,
