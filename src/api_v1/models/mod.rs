@@ -15,9 +15,9 @@ pub enum GameMode {
   Mania,
 }
 
-impl ToString for GameMode {
-  fn to_string(&self) -> String {
-    self.as_ref().to_string()
+impl std::fmt::Display for GameMode {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.as_ref())
   }
 }
 

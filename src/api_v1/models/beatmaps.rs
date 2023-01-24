@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
 use super::{de::*, GameMode, ModsFlag, UserId};
+use crate::api_v1::{req::Query, Error as ReqError};
 
 #[derive(Debug, TypedBuilder)]
 #[builder(builder_type_doc = "Builder for creating request to get_beatmaps API,
@@ -31,55 +30,54 @@ pub struct GetBeatmapsProps<'u, 'k> {
   since: Option<chrono::NaiveDate>,
 }
 
-impl<'u, 'k> TryFrom<GetBeatmapsProps<'u, 'k>> for HashMap<&'static str, String> {
-  /// There is only one error represent that the beatmapset_id and beatmap_id are both not given
-  type Error = ();
+impl<'u, 'k> TryFrom<GetBeatmapsProps<'u, 'k>> for Query {
+  type Error = ReqError;
 
   fn try_from(value: GetBeatmapsProps<'u, 'k>) -> std::result::Result<Self, Self::Error> {
-    let mut query = HashMap::new();
+    let mut query = Query::new();
 
-    query.insert("k", value.api_key.to_string());
+    query.push("k", value.api_key);
 
     if value.beatmapset_id == 0 && value.beatmap_id == 0 {
-      return Err(());
+      return Err(ReqError::InvalidRequestParams);
     }
 
     if value.beatmapset_id != 0 {
-      query.insert("s", value.beatmapset_id.to_string());
+      query.push("s", value.beatmapset_id);
     }
 
     if value.beatmap_id != 0 {
-      query.insert("b", value.beatmap_id.to_string());
+      query.push("b", value.beatmap_id);
     }
 
     if let Some(user_id) = value.user_id {
       match user_id {
         UserId::Id(id) => {
-          query.insert("u", id.to_string());
+          query.push("u", id);
         }
         UserId::Username(name) => {
-          query.insert("u", name.to_string());
-          query.insert("type", "string".to_string());
+          query.push("u", name);
+          query.push("type", "string");
         }
       };
     }
 
     if let Some(mode) = value.mode {
-      query.insert("m", mode.to_string());
+      query.push("m", &mode);
 
       let include_converted = if value.include_converted { "1" } else { "0" };
       match mode {
-        GameMode::Standard => None, // do nothing
-        _ => query.insert("a", include_converted.to_string()),
+        GameMode::Standard => (), // do nothing
+        _ => query.push("a", include_converted),
       };
     }
 
     if let Some(hash) = value.beatmap_hash {
-      query.insert("h", hash);
+      query.push("h", hash);
     }
 
     if value.limit != 0 {
-      query.insert("limit", value.limit.to_string());
+      query.push("limit", value.limit);
     }
 
     if !value.mods.is_empty() {
@@ -88,11 +86,11 @@ impl<'u, 'k> TryFrom<GetBeatmapsProps<'u, 'k>> for HashMap<&'static str, String>
         .into_iter()
         .fold(0_u64, |accum, item| accum | item.bits());
 
-      query.insert("mods", mods.to_string());
+      query.push("mods", mods);
     }
 
     if let Some(date) = value.since {
-      query.insert("since", date.to_string());
+      query.push("since", date);
     }
 
     Ok(query)

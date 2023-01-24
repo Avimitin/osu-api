@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use super::{
   de::{s_to_bool, s_to_datetime, s_to_mods_flags, s_to_u32, s_to_u64},
   GameMode, ModsFlag, UserId,
 };
+use crate::api_v1::{req::Query, Error as ReqError};
 use serde::Deserialize;
 use typed_builder::TypedBuilder;
 
@@ -18,31 +17,33 @@ pub struct GetUserRecentProp<'k, 'u> {
   limit: u8,
 }
 
-impl<'k, 'u> From<GetUserRecentProp<'k, 'u>> for HashMap<&'static str, String> {
-  fn from(prop: GetUserRecentProp<'k, 'u>) -> Self {
+impl<'k, 'u> TryFrom<GetUserRecentProp<'k, 'u>> for Query {
+  type Error = ReqError;
+
+  fn try_from(prop: GetUserRecentProp<'k, 'u>) -> std::result::Result<Self, Self::Error> {
     let mut query = Self::new();
 
-    query.insert("k", prop.api_key.to_string());
+    query.push("k", prop.api_key);
 
     match prop.user_info {
       UserId::Id(number) => {
-        query.insert("u", number.to_string());
+        query.push("u", number);
       }
       UserId::Username(name) => {
         // Osu! API server will recognize name consist with only number as user ID,
         // so we must explicit set `type` to `string` here to avoid misunderstanding.
-        query.insert("type", "string".to_string());
-        query.insert("u", name.to_string());
+        query.push("type", "string");
+        query.push("u", name);
       }
     };
 
     if let Some(mode) = prop.mode {
-      query.insert("m", mode.to_string());
+      query.push("m", mode);
     }
 
-    query.insert("limit", prop.limit.to_string());
+    query.push("limit", prop.limit);
 
-    query
+    Ok(query)
   }
 }
 

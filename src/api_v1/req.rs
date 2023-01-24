@@ -1,43 +1,77 @@
-use std::collections::HashMap;
+use std::fmt::Display;
 
-use crate::api_v1::{
-  ApiEndpoint, Error, GetBeatmapsProps, GetBeatmapsResp, GetUserRecentProp, GetUserRecentResp,
-  OsuApiRequester,
-};
+use crate::api_v1::{ApiEndpoint, Error, GetBeatmapsResp, GetUserRecentResp, OsuApiRequester};
 
-type QueryParam = HashMap<&'static str, String>;
+pub struct Query {
+  pair: Vec<String>,
+}
 
-#[async_trait::async_trait]
-impl OsuApiRequester for reqwest::Client {
-  async fn get_user_recent<'k, 'u>(
-    &self,
-    param: GetUserRecentProp<'k, 'u>,
-  ) -> Result<Vec<GetUserRecentResp>, Error> {
-    let param: QueryParam = param.into();
-    let url = reqwest::Url::parse_with_params(ApiEndpoint::GET_USER_RECENT, &param)
-      .expect("fail to turn GetUserRecentProp into params");
-    let resp = self.get(url).send().await?.bytes().await?;
-    let recent: Vec<GetUserRecentResp> = serde_json::from_slice(&resp)?;
-
-    Ok(recent)
+impl Query {
+  pub fn new() -> Self {
+    Self { pair: Vec::new() }
   }
 
-  async fn get_beatmaps<'u, 'k>(
-    &self,
-    param: GetBeatmapsProps<'u, 'k>,
-  ) -> Result<Vec<GetBeatmapsResp>, Error> {
-    let param: HashMap<&'static str, String> =
-      param.try_into().map_err(|_| Error::InvalidRequestParams)?;
-    let url = reqwest::Url::parse_with_params(ApiEndpoint::GET_BEATMAPS, &param)
-      .expect("fail to turn given param into query");
-    let resp = self.get(url).send().await?.bytes().await?;
-    let recent: Vec<GetBeatmapsResp> = serde_json::from_slice(&resp)?;
-    Ok(recent)
+  pub fn push(&mut self, key: impl Display, val: impl Display) {
+    self.pair.push(format!("{key}={val}"))
+  }
+
+  pub fn into_query_str(self) -> String {
+    self.pair.into_iter().fold(String::new(), |accum, item| {
+      if accum.is_empty() {
+        item
+      } else {
+        format!("{accum}&{item}")
+      }
+    })
+  }
+}
+
+macro_rules! impl_reqwest {
+  (
+    $(
+      $name:ident {
+        @endpoint: $endpoint:expr;
+        @ret:  $ret:ty;
+      }
+    )+
+  ) => {
+    #[async_trait::async_trait]
+    impl OsuApiRequester for reqwest::Client {
+      $(
+        async fn $name<Q>(
+          &self,
+          query: Q,
+        ) -> Result<$ret, Error>
+        where Q: TryInto<Query, Error = Error> + Send + Sync
+      {
+          let query: Result<Query, Error> = query.try_into();
+          let url = reqwest::Url::parse(&format!("{}?{}", $endpoint, query.unwrap().into_query_str()))
+            .expect(concat!("fail to parse param in ", stringify!($name)));
+          let resp = self.get(url).send().await?.bytes().await?;
+          let ret: $ret = serde_json::from_slice(&resp)?;
+
+          Ok(ret)
+        }
+      )+
+    }
+  };
+}
+
+impl_reqwest! {
+  get_user_recent {
+    @endpoint: ApiEndpoint::GET_USER_RECENT;
+    @ret: Vec<GetUserRecentResp>;
+  }
+
+  get_beatmaps {
+    @endpoint: ApiEndpoint::GET_BEATMAPS;
+    @ret: Vec<GetBeatmapsResp>;
   }
 }
 
 #[tokio::test]
 async fn test_get_user_recent() {
+  use crate::api::GetUserRecentProp;
   dotenvy::dotenv().ok();
 
   let api_key = std::env::var("OSU_API_KEY").expect("Require env `OSU_API_KEY` set");
@@ -55,6 +89,7 @@ async fn test_get_user_recent() {
 
 #[tokio::test]
 async fn test_get_beatmaps() {
+  use crate::api::GetBeatmapsProps;
   dotenvy::dotenv().ok();
 
   let api_key = std::env::var("OSU_API_KEY").expect("Require env `OSU_API_KEY` set");

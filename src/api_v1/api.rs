@@ -1,4 +1,5 @@
 use super::models;
+use crate::api_v1::req::Query;
 
 use paste::paste;
 
@@ -24,19 +25,6 @@ generate_endpoint! {
   get_user_recent;
 }
 
-#[async_trait::async_trait]
-pub trait OsuApiRequester {
-  async fn get_user_recent<'k, 'u>(
-    &self,
-    param: models::GetUserRecentProp<'k, 'u>,
-  ) -> Result<Vec<models::GetUserRecentResp>, Error>;
-
-  async fn get_beatmaps<'u, 'k>(
-    &self,
-    param: models::GetBeatmapsProps<'u, 'k>,
-  ) -> Result<Vec<models::GetBeatmapsResp>, Error>;
-}
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
   #[error("the given request param is invalid")]
@@ -45,4 +33,21 @@ pub enum Error {
   NetIO(#[from] reqwest::Error),
   #[error("fail to deserialize response into expected type")]
   UnexpectedResponse(#[from] serde_json::Error),
+}
+
+macro_rules! generate_trait {
+  ( $( $name:ident -> $ret:ty ),+ ) => {
+    #[async_trait::async_trait]
+    pub trait OsuApiRequester {
+      $(
+        async fn $name<Q>(&self, query: Q) -> Result<$ret, Error>
+          where Q: TryInto<Query, Error = Error> + Send + Sync;
+      )+
+    }
+  }
+}
+
+generate_trait! {
+  get_user_recent -> Vec<models::GetUserRecentResp>,
+  get_beatmaps    -> Vec<models::GetBeatmapsResp>
 }
