@@ -1,4 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::api_v2::Error;
 
 /// ```
 /// if User::uid == 0{
@@ -29,6 +30,24 @@ impl User {
         }
         self.time = c as u64 + add_time;
     }
+    
+    fn new() -> Self{
+        User{
+            uid: 0,
+            time: 0,
+            access_token: "".to_string(),
+            refresh_token: "".to_string()
+        }
+    }
+
+    pub fn new_bot(code: String) -> Self{
+        User{
+            uid: 0,
+            time: 0,
+            access_token: "".to_string(),
+            refresh_token: code
+        }
+    }
 
     pub fn alive(&self) -> bool {
         match SystemTime::now().duration_since(UNIX_EPOCH) {
@@ -44,7 +63,11 @@ impl User {
         u.save(&self);
     }
 
-    pub fn get_access_token(&mut self){
-
+    pub fn get_access_token(&self) -> Option<String>{
+        if self.alive() {
+            return Some(self.access_token.clone());
+        } else {
+            return None;
+        }
     }
 }
