@@ -28,7 +28,7 @@ async-trait = "0.1.62"
 dotenvy = "0.15.6"
 
 [features]
-default = ["v1", "util"]
+default = ["v2", "util"]
 v1 = []
 v2 = []
 util = []
