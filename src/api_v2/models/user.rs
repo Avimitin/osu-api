@@ -9,6 +9,7 @@ use crate::api_v2::Error;
 /// };
 /// ```
 ///
+#[derive(Default)]
 pub struct User {
     pub uid: i32,
     pub time: u64,
@@ -30,22 +31,11 @@ impl User {
         }
         self.time = c as u64 + add_time;
     }
-    
-    fn new() -> Self{
-        User{
-            uid: 0,
-            time: 0,
-            access_token: "".to_string(),
-            refresh_token: "".to_string()
-        }
-    }
 
     pub fn new_bot(code: String) -> Self{
         User{
-            uid: 0,
-            time: 0,
-            access_token: "".to_string(),
-            refresh_token: code
+            refresh_token: code,
+            ..Self::default()
         }
     }
 
