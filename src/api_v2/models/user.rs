@@ -40,7 +40,7 @@ impl User {
         }
     }
 
-    pub fn alive(&self) -> bool {
+    pub fn is_alive(&self) -> bool {
         match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(duration) => { duration.as_millis() > self.time as u128 }
             Err(_) => { false }
@@ -55,7 +55,7 @@ impl User {
     }
 
     pub fn get_access_token(&self) -> Option<String>{
-        if self.alive() {
+        if self.is_alive() {
             return Some(self.access_token.clone());
         } else {
             return None;
