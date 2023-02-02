@@ -17,7 +17,7 @@ pub struct User {
     pub refresh_token: String,
 }
 
-pub trait UserSave {
+pub trait UserSaver {
     fn save(&self, user: &User);
 }
 
@@ -32,9 +32,10 @@ impl User {
         self.time = c as u64 + add_time;
     }
 
-    pub fn new_bot(code: String) -> Self{
+    pub fn create_bot(code: String, client_id: i32) -> Self{
         User{
             refresh_token: code,
+            uid: client_id,
             ..Self::default()
         }
     }
