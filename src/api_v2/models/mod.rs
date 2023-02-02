@@ -7,7 +7,7 @@ use chrono::DateTime;
 use serde::{Deserialize, Deserializer};
 
 
-pub use user::{User, UserSave};
+pub use user::{User, UserSaver};
 pub use beatmap::BeatMap;
 pub use beatmap::Failtimes;
 pub use beatmapset::BeatMapSet;

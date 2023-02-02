@@ -1,5 +1,4 @@
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::api_v2::Error;
 
 /// ```
 /// if User::uid == 0{
@@ -47,7 +46,7 @@ impl User {
         }
     }
 
-    pub fn update<T: UserSave>(&mut self, access_token: String, refresh_token: String, next_time: u64, u:&T) {
+    pub fn update<T: UserSaver>(&mut self, access_token: String, refresh_token: String, next_time: u64, u:&T) {
         self.access_token = access_token;
         self.refresh_token = refresh_token;
         self.next_time(next_time);
