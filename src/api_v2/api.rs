@@ -9,8 +9,8 @@ pub struct Scopes {
 }
 
 impl Scopes {
-    pub fn new() -> Self {
-        return Self::default();
+    pub fn builder() -> Self {
+        Self::default()
     }
 
     /// Allows sending chat messages on a user's behalf.
@@ -19,22 +19,22 @@ impl Scopes {
     /// - a Chat Bot account to send messages on behalf of other users.
     /// - Authorization code grant where the user is the same as the client's owner (send as yourself).
     pub fn chat(self) -> Self {
-        return self.add_scope("chat.write");
+        self.add_scope("chat.write")
     }
 
     /// Allows acting as the owner of a client; only available for Client Credentials Grant.
     pub fn delegate(self) -> Self {
-        return self.add_scope("delegate");
+        self.add_scope("delegate")
     }
 
     /// Allows creating and editing forum posts on a user's behalf.
     pub fn forum(self) -> Self {
-        return self.add_scope("forum.write");
+        self.add_scope("forum.write")
     }
 
     /// Allows reading of the user's friend list.
     pub fn friends(self) -> Self {
-        return self.add_scope("friends.read");
+        self.add_scope("friends.read")
     }
 
     ///
@@ -42,22 +42,22 @@ impl Scopes {
     ///
     /// `identify`  is the default scope for the Authorization Code Grant and always implicitly provided.
     pub fn identify(self) -> Self {
-        return self.add_scope("identify");
+        self.add_scope("identify")
     }
 
     /// Allows reading of publicly available data on behalf of the user.
     pub fn public(self) -> Self {
-        return self.add_scope("public");
+        self.add_scope("public")
     }
 
     fn add_scope(mut self, scope: &str) -> Self {
         let s = &self.scopes_str;
         self.scopes_str = format!("{s} {scope}");
-        return self;
+        self
     }
 
-    fn to_string(self) -> String {
-        return self.scopes_str;
+    fn create(self) -> String {
+        self.scopes_str
     }
 }
 
@@ -65,11 +65,11 @@ pub mod api_url {
     const API_URL: &str = "https://osu.ppy.sh/oauth/";
 
     pub fn get_authorize() -> String {
-        return format!("{API_URL}/authorize");
+        format!("{API_URL}/authorize")
     }
 
     pub fn get_token() -> String {
-        return format!("{API_URL}/token");
+        format!("{API_URL}/token")
     }
 }
 
@@ -86,7 +86,7 @@ impl Api {
         let bot = User::create_bot(code, client_id);
         let bot = Arc::new(bot);
         let client = reqwest::Client::new();
-        let redirect_uri = url.to_string();
+        let redirect_uri = url;
         Ok(Self {
             bot,
             client,
@@ -98,17 +98,16 @@ impl Api {
         let client_id = &self.bot.uid;
         let redirect_uri = &self.redirect_uri;
         let response_type = "code";
-        let scope = scopes.to_string();
+        let scope = scopes.create();
 
         let mut url = api_url::get_authorize();
-        url = format!(
+        format!(
             "{url}?\
             client_id={client_id}&\
             redirect_uri={redirect_uri}&\
             response_type={response_type}&\
             scope={scope}&\
-            state={state}");
-        return url;
+            state={state}")
     }
 
     pub async fn refresh_token(&self, user: &mut User) {
@@ -144,10 +143,10 @@ impl Api {
         let mut head = HashMap::<&'static str, String>::new();
 
         if let Some(e) = user.get_access_token() {
-            head.insert("Authorization", format!("Bearer {}", e));
+            head.insert("Authorization", format!("Bearer {e}"));
         }
         head.insert("Content-Type", "application/json".to_string());
         head.insert("Accept", "application/json".to_string());
-        return head;
+        head
     }
 }
