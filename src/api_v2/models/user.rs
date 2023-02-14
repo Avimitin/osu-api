@@ -22,17 +22,17 @@ pub trait UserSaver {
 
 impl User {
     pub fn next_time(&mut self, add_time: u64) {
-        let c;
-        if let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) {
-            c = duration.as_millis();
-        } else {
-            c = 0;
-        }
+        let c =
+            if let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) {
+                duration.as_millis()
+            } else {
+                0
+            };
         self.time = c as u64 + add_time;
     }
 
-    pub fn create_bot(code: String, client_id: i32) -> Self{
-        User{
+    pub fn create_bot(code: String, client_id: i32) -> Self {
+        User {
             refresh_token: code,
             uid: client_id,
             ..Self::default()
@@ -46,18 +46,18 @@ impl User {
         }
     }
 
-    pub fn update<T: UserSaver>(&mut self, access_token: String, refresh_token: String, next_time: u64, u:&T) {
+    pub fn update<T: UserSaver>(&mut self, access_token: String, refresh_token: String, next_time: u64, u: &T) {
         self.access_token = access_token;
         self.refresh_token = refresh_token;
         self.next_time(next_time);
-        u.save(&self);
+        u.save(self);
     }
 
-    pub fn get_access_token(&self) -> Option<String>{
+    pub fn get_access_token(&self) -> Option<String> {
         if self.is_alive() {
-            return Some(self.access_token.clone());
+            Some(self.access_token.clone())
         } else {
-            return None;
+            None
         }
     }
 }
