@@ -61,9 +61,17 @@ impl Scopes {
     }
 }
 
-const API_URL: &str = "https://osu.ppy.sh/oauth/";
-const API_AUTHORIZE: &str = "authorize";
-const API_TOKEN: &str = "token";
+pub mod api_url {
+    const API_URL: &str = "https://osu.ppy.sh/oauth/";
+
+    pub fn get_authorize() -> String {
+        return format!("{API_URL}/authorize");
+    }
+
+    pub fn get_token() -> String {
+        return format!("{API_URL}/token");
+    }
+}
 
 pub struct Api {
     bot: Arc<User>,
@@ -91,8 +99,10 @@ impl Api {
         let redirect_uri = &self.redirect_uri;
         let response_type = "code";
         let scope = scopes.to_string();
-        let url = format!(
-            "{API_URL}{API_AUTHORIZE}?\
+
+        let mut url = api_url::get_authorize();
+        url = format!(
+            "{url}?\
             client_id={client_id}&\
             redirect_uri={redirect_uri}&\
             response_type={response_type}&\
@@ -102,7 +112,7 @@ impl Api {
     }
 
     pub async fn refresh_token(&self, user: &mut User) {
-        let url = format!("{API_URL}{API_TOKEN}");
+        let url = api_url::get_token();
         let header = self.header(user);
         let body = json!({
             "client_id": self.bot.uid.to_string(),
