@@ -5,7 +5,7 @@ use crate::api_v2::{Error, User};
 
 #[derive(Default)]
 pub struct Scopes {
-    str: String,
+    scopes_str: String,
 }
 
 impl Scopes {
@@ -51,13 +51,13 @@ impl Scopes {
     }
 
     fn add_scope(mut self, scope: &str) -> Self {
-        let s = &self.str;
-        self.str = format!("{s} {scope}");
+        let s = &self.scopes_str;
+        self.scopes_str = format!("{s} {scope}");
         return self;
     }
 
     fn to_string(self) -> String {
-        return self.str.to_string();
+        return self.scopes_str;
     }
 }
 
