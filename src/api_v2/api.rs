@@ -100,7 +100,7 @@ impl Api {
         let response_type = "code";
         let scope = scopes.create();
 
-        let mut url = api_url::get_authorize();
+        let url = api_url::get_authorize();
         format!(
             "{url}?\
             client_id={client_id}&\
@@ -110,9 +110,9 @@ impl Api {
             state={state}")
     }
 
-    pub async fn refresh_token(&self, user: &mut User) {
+    pub async fn refresh_token(&self, mut user: User) -> (Result<(), Error>, User){
         let url = api_url::get_token();
-        let header = self.header(user);
+        let header = self.header(&user);
         let body = json!({
             "client_id": self.bot.uid.to_string(),
             "client_secret": self.bot.refresh_token.to_string(),
@@ -136,6 +136,8 @@ impl Api {
         user.access_token = access_token.to_string();
         user.refresh_token = refresh_token.to_string();
         user.next_time(expires_in as u64);
+
+        (Ok(()), user)
     }
 
     /// make sure user's access_token is alive

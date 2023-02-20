@@ -1,4 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
+use crate::api_v2::api::Api;
+use crate::api_v2::Error;
 
 /// ```
 /// if User::uid == 0{
@@ -16,9 +18,6 @@ pub struct User {
     pub refresh_token: String,
 }
 
-pub trait UserSaver {
-    fn save(&self, user: &User);
-}
 
 impl User {
     pub fn next_time(&mut self, add_time: u64) {
@@ -46,18 +45,23 @@ impl User {
         }
     }
 
-    pub fn update<T: UserSaver>(&mut self, access_token: String, refresh_token: String, next_time: u64, u: &T) {
-        self.access_token = access_token;
-        self.refresh_token = refresh_token;
-        self.next_time(next_time);
-        u.save(self);
-    }
-
     pub fn get_access_token(&self) -> Option<String> {
         if self.is_alive() {
             Some(self.access_token.clone())
         } else {
             None
+        }
+    }
+
+    pub(crate) async fn get_access_token_and_refresh(self, api: &Api) -> (Result<String, Error>, Self) {
+        let (r,u) = api.refresh_token(self).await;
+        match r {
+            Ok(_) => {
+                (Ok(u.access_token.clone()), u)
+            }
+            Err(e) => {
+                (Err(e), u)
+            }
         }
     }
 }
