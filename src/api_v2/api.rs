@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::json;
-use crate::api_v2::{Error, User};
+use crate::api_v2::{BeatMap, Error, User};
+use crate::api_v2::Error::NetworkErr;
 
 #[derive(Default)]
 pub struct Scopes {
@@ -71,10 +72,14 @@ pub mod api_url {
     pub fn get_token() -> String {
         format!("{API_URL}/token")
     }
+
+    pub fn get_beatmap(bid: i64) -> String {
+        format!("{API_URL}/beatmaps/{bid}")
+    }
 }
 
 pub struct Api {
-    bot: Arc<User>,
+    bot: Arc<Mutex<User>>,
     client: reqwest::Client,
     redirect_uri: String,
 }
@@ -84,7 +89,7 @@ impl Api {
     /// make sure callback url right
     pub fn new(client_id: i32, code: String, url: String) -> Result<Self, Error> {
         let bot = User::create_bot(code, client_id);
-        let bot = Arc::new(bot);
+        let bot = Arc::new(Mutex::new(bot));
         let client = reqwest::Client::new();
         let redirect_uri = url;
         Ok(Self {
@@ -95,7 +100,8 @@ impl Api {
     }
 
     pub fn get_oauth_url(&self, scopes: Scopes, state: &str) -> String {
-        let client_id = &self.bot.uid;
+        let bot_user = self.bot.lock().unwrap();
+        let client_id = bot_user.uid;
         let redirect_uri = &self.redirect_uri;
         let response_type = "code";
         let scope = scopes.create();
@@ -110,23 +116,31 @@ impl Api {
             state={state}")
     }
 
-    pub async fn refresh_token(&self, mut user: User) -> (Result<(), Error>, User){
+    pub async fn refresh_token(&self, mut user: User) -> (Result<(), Error>, User) {
         let url = api_url::get_token();
         let header = self.header(&user);
-        let body = json!({
-            "client_id": self.bot.uid.to_string(),
-            "client_secret": self.bot.refresh_token.to_string(),
-            "refresh_token": user.refresh_token.to_string(),
-            "grant_type": "refresh_token".to_string(),
-            "redirect_uri": self.redirect_uri.clone()
-        });
 
-        let mut request_build = self.client.post(url)
-            .body(body.to_string());
-        for (k, v) in header {
-            request_build = request_build.header(k, v);
+        let body;
+        {
+            let bot_user = self.bot.lock().unwrap();
+            body = json!({
+                "client_id": bot_user.uid.to_string(),
+                "client_secret": bot_user.refresh_token.to_string(),
+                "refresh_token": user.refresh_token.to_string(),
+                "grant_type": "refresh_token".to_string(),
+                "redirect_uri": self.redirect_uri.clone()
+            }).to_string();
         }
-        let rep = request_build.send().await.unwrap();
+
+        let rep = self.client.post(url)
+            .headers(header)
+            .body(body)
+            .send().await;
+
+        if let Err(e) = rep {
+            return (Err(NetworkErr(e.to_string())), user);
+        }
+        let rep = rep.unwrap();
         let str = rep.text().await.unwrap();
         let json = json!(str);
         let access_token = json["access_token"].as_str().unwrap();
@@ -141,14 +155,43 @@ impl Api {
     }
 
     /// make sure user's access_token is alive
-    fn header(&self, user: &User) -> HashMap<&'static str, String> {
-        let mut head = HashMap::<&'static str, String>::new();
+    fn header(&self, user: &User) -> HeaderMap {
+        let mut head = HeaderMap::new();
 
         if let Some(e) = user.get_access_token() {
-            head.insert("Authorization", format!("Bearer {e}"));
+            head.insert("Authorization", HeaderValue::from_str(&format!("Bearer {e}")).unwrap());
         }
-        head.insert("Content-Type", "application/json".to_string());
-        head.insert("Accept", "application/json".to_string());
+        head.insert("Content-Type", HeaderValue::from_static("application/json"));
+        head.insert("Accept", HeaderValue::from_static("application/json"));
         head
+    }
+
+    pub async fn get_beatmap(&self, beatmap_id: i64, user: User) -> (Result<BeatMap, Error>, User) {
+        let url = api_url::get_beatmap(beatmap_id);
+        let user_alive;
+        if !user.is_alive() {
+            let (e, user) = self.refresh_token(user).await;
+            if e.is_err() {
+                return (Err(Error::Err("".to_string())), user);
+            }
+            user_alive = user;
+        } else {
+            user_alive = user;
+        }
+        let header = self.header(&user_alive);
+        let rep = self.client
+            .get(url)
+            .headers(header)
+            .send().await;
+
+        if let Err(e) = rep {
+            return (Err(NetworkErr(e.to_string())), user_alive);
+        }
+
+        let rep = rep.unwrap();
+        let beatmap = rep.text().await.unwrap();
+        let beatmap = serde_json::from_str::<BeatMap>(beatmap.as_str()).unwrap();
+
+        (Ok(beatmap), user_alive)
     }
 }

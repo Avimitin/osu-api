@@ -6,4 +6,6 @@ pub use models::{User, BeatMap, BeatMapSet, Covers, Failtimes};
 pub enum Error {
     #[error("unknown error")]
     Err(String),
+    #[error("network error")]
+    NetworkErr(String)
 }
